@@ -1,0 +1,237 @@
+[saloni@localhost cid]$ start_date=201805220000
+[saloni@localhost cid]$ touch -t ${start_date} start
+[saloni@localhost cid]$ find .  -iname "*.java" -type f  -newer start
+
+*****************************************************************
+Find files older than x days(only look in specified folder as depth is 1)
+	find /tmp/ -maxdepth 1 -type f -mtime +x 
+Find folder older that x days
+	find /tmp/ -maxdepth 1 -type d -mtime +x 
+	
+*****************************************************************	
+to find newly created java files 
+
+	find . -iname "*.java" -type f -mmin -1440
+
+*****************************************************************
+#corntab enter to run scheduler in every one minute
+
+	* * * * * /usr/bin/bash /home/saloni/Desktop/Schuduler.sh
+*****************************************************************
+
+#for file in `cat list.txt`; do `cp -t "$file"  "$des_path"`; done
+
+cat list.txt | while read line; do cp "$line"  "$des_path"; done
+
+*****************************************************************
+
+
+#!/usr/bin/bash
+
+#exec >> /home/saloni/Desktop/Backup/test_output.txt
+
+#exec 2>$1
+
+#source_path=/mnt/D_DRIVE/SDK/DCM/Builds/MasterBuild/DCM-J/SRServices/ForSRServices/src/cdac/medinfo/sdk/dcm30_04/templates/cid
+#source_path=/mnt/D_DRIVE/SDK/DCM/Builds/MasterBuild/DCM-J/SRServices/ForSRServices/src/cdac/medinfo/sdk/dcm30_04/templates/enums/cv
+
+#find $source_path -iname "*.java" -type f -mmin -1440 > /home/saloni/Desktop/BackUp/CIDs/scheduler_output.txt
+
+#copying file to destination 
+
+#des_path=/home/saloni/Desktop/BackUp/cid
+
+#cat /home/saloni/Desktop/BackUp/CIDs/scheduler_output.txt | while read line; do cp -p "$line"  "$des_path"; done
+
+sourcePath_array=( "/mnt/D_DRIVE/SDK/DCM/Builds/MasterBuild/DCM-J/SRServices/ForSRServices/src/cdac/medinfo/sdk/dcm30_04/templates/cid" "/mnt/D_DRIVE/SDK/DCM/Builds/MasterBuild/DCM-J/SRServices/ForSRServices/src/cdac/medinfo/sdk/dcm30_04/templates/enums/cv" "/mnt/D_DRIVE/SDK/DCM/Builds/MasterBuild/DCM-J/SRServices/ForSRServices/src/cdac/medinfo/sdk/dcm30_04/templates/enums/cm")
+
+destPath_array=("/home/saloni/Desktop/BackUp/cid" "/home/saloni/Desktop/BackUp/cv" "/home/saloni/Desktop/BackUp/cm")
+
+for (( i=0; i<3; i++ ))
+do
+	find $sourcepath -iname "*.java" -type f -mmin -1440 > /home/saloni/Desktop/BackUp/CIDs/scheduler_output.txt
+   echo $element
+done
+
+#copying EnumSMONEDDICOMMap
+source_enumPath=/mnt/D_DRIVE/SDK/DCM/Builds/MasterBuild/DCM-J/SRServices/ForSRServices/src/cdac/medinfo/sdk/dcm30_04/templates/snomeddicommap/EnumSNOMEDDICOMMap.java
+dest_enumPath=/home/saloni/Desktop/BackUp/snomeddicommap/EnumSNOMEDDICOMMap.java
+
+cp -p $source_enumPath $dest_enumPath
+
+###################################################################################################################################################################
+
+#exec >> /home/saloni/Desktop/Backup/test_output.txt
+
+#exec 2>$1
+
+#source_path=/mnt/D_DRIVE/SDK/DCM/Builds/MasterBuild/DCM-J/SRServices/ForSRServices/src/cdac/medinfo/sdk/dcm30_04/templates/cid
+#source_path=/mnt/D_DRIVE/SDK/DCM/Builds/MasterBuild/DCM-J/SRServices/ForSRServices/src/cdac/medinfo/sdk/dcm30_04/templates/enums/cv
+
+#find $source_path -iname "*.java" -type f -mmin -1440 > /home/saloni/Desktop/BackUp/CIDs/scheduler_output.txt
+
+#copying file to destination 
+
+#des_path=/home/saloni/Desktop/BackUp/cid
+
+#cat /home/saloni/Desktop/BackUp/CIDs/scheduler_output.txt | while read line; do cp -p "$line"  "$des_path"; done
+
+
+
+
+for (( i=0; i<3; i++ ))
+do
+	find ${sourcePath_array[i]} -iname "*.java" -type f -mmin -1440 > /home/saloni/Desktop/BackUp/CIDs/scheduler_output.txt
+	cat /home/saloni/Desktop/BackUp/CIDs/scheduler_output.txt | while read line; do cp -p "$line"  "${destPath_array[i]}"; done
+  
+done
+***************************************************************************************
+0 12,16 * * mon-fri /usr/bin/bash /home/saloni/Desktop/Schuduler.sh > /home/saloni/Desktop/BackUp/script.log 2>&1
+
+***************************************************************************************
+
+create and add disk
+
+1.create disk
+2. $fdisk -l  // list all the disk present 
+3. 
+
+**************************************************************************************
+
+Logical Volume Manager(LVM)
+			
+Steps to create lv, pv, vg
+
+1. create a partition(use fdisk /dev/<disk / eg. sdb> -----> n(for new )---> p(for partition) ---> enter --->enter --> w(for write operation)  ---- Done). This will create a disk partition(fdisk -l to check partition created) for e.g. /dev/sda1 .
+2. Create Physical Volume(PV) --> pvcreate /dev/<disk Partition>
+3. Create Volume Group(VG) ---> vgcreate <volume group name> /dev/<disk partition1> /dev/<disk partition2> ....
+4. Create Logical Volume in above VG ---> lvcreate -n <name of logical volume>  -L <size> <volume group name> (for e.g. lvcreate -n hadoop_lv -l 100%FREE dhs_vg, lvcreate -n disk1 data -l %100FREE)
+5. Format the new volume --> mkfs.ext4 /dev/<vg name>/<lv name> (mkfs.xfs /dev/mapper/data-disk1 )
+6. add entry in /etc/fstab
+	$ /dev/mapper/data-disk1(disk name to b mounted) /data(location)                       xfs     defaults        0 0
+6. Mount the LV -> mount /dev/<vg name>/<lv name> /path/to/mount/ (mount -a)
+
+
+Note: While extending the logical volume do 'resize2fs /dev/<vg>/<lv>' to gain the extended space.
+
+
+Extending the partition
+ 569  fdisk /dev/sda
+  570  reboot
+  571  ls
+  572  fdisk -l
+  573  fdisk /dev/sda
+  574  df -h
+  575  fdisk -l
+  576  df -h
+  577  pvs
+  578  pvcreate /dev/sda2
+  579  vgextend /dev/dhs_vg /dev/sda2
+  580  lvextend /dev/dhs_vg/hadoop_lv /dev/sda2
+  581  df -h
+  583  resize2fs /dev/dhs_vg/hadoop_lv
+  584  df -h
+  585  vgs
+  586  lvextend /dev/dhs_vg/hadoop_lv /dev/sda1
+  587  resize2fs /dev/dhs_vg/hadoop_lv
+ 
+ 
+ 
+ Extending root(centos-root) volume
+  692  fdisk /dev/sdb
+  695  pvcreate /dev/sdb1
+  698  vgextend /dev/centos /dev/sdb1
+  699  lvextend /dev/centos/root /dev/sdb1
+  703  xfs_growfs /dev/centos/root
+  704  df -h
+ 
+ 
+ 
+ Add SWAP from lvm
+  To add a swap volume group (assuming /dev/VolGroup00/LogVol02 is the swap volume you want to add):
+
+    Create the LVM2 logical volume of size 256 MB:
+
+    lvm lvcreate VolGroup00 -n LogVol02 -L 256M
+
+  Format the new swap space:
+
+    mkswap /dev/VolGroup00/LogVol02
+
+  Add the following entry to the /etc/fstab file:
+
+    /dev/VolGroup00/LogVol02   swap     swap    defaults     0 0
+
+  Enable the extended logical volume:
+
+    swapon -va
+
+  Test that the logical volume has been extended properly:
+
+    cat /proc/swaps
+    free
+**********************************************************************************************
+============================================== Clean root space ===================================
+Remove tmp files in /tmp folder
+Remove old kernel rpms
+	rpm -q kernel
+	rpm -ev <old kernel>
+	
+		OR
+		
+	package-cleanup --oldkernels --count=1
+	
+	
+	
+Move /home directory to other storage
+
+Clean /var/log/messages
+clean core files
+
+yum clean all
+
+ du -sk * | sort -nr | head -10
+ du -sh /*
+ 
+ https://rbgeek.wordpress.com/2013/01/27/how-to-extend-the-root-partition-in-lvm/
+ 
+  xfs_growfs  /dev/centos/root
+  
+  
+Clean mysql binlogs
+	If below folder consuming much space then you need to clean some mysql space
+	du -sk /var/lib/mysql | sort -nr | head -10
+
+Check  if binlog files are consuming space in /var/lib/mysql folder. If Yes then execute below command to purge logs older than 3 days
+Attention Only execute below command if you are not using replication (see  http://www.cyberciti.biz/faq/what-is-mysql-binary-log/ site for more information)
+mysql -u root -p 'MyPassword' -e "PURGE BINARY LOGS BEFORE '2008-12-15 10:06:06';"
+
+Also check
+
+
+
+
+
+
+
+
+
+Programing Languages : 
+1.CPP
+2.JAVA and Advance JAVA( Spring and Hibernate)
+3.Linux and shell Scripting
+
+Database 
+1.MySql
+
+Standards
+1.Brief knowledge of DICOM 2015c
+
+****************************************************************************************************************************
+
+remove bomb symbole
+
+
+https://askubuntu.com/questions/19979/how-to-restart-nautilus-without-logging-out
+
+
